@@ -31,7 +31,7 @@
     <router-view/>
   </div>
 
-  <footer class="py-5 bg-dark fixed-bottom">
+  <footer class="py-2 bg-dark fixed-bottom">
     <div class="container">
       <p class="m-0 text-center text-white">Copyright &copy; Vinh Nguyen 2017</p>
     </div>
@@ -51,12 +51,21 @@ export default {
   font-family: 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
 #app .app-content {
   padding-top: 20px;
   padding-bottom: 20px;
+  margin-bottom: 40px;
+  margin-top: 60px;
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  overflow-x: hidden;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 </style>
