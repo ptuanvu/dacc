@@ -20,7 +20,7 @@
             </span>
           </div>
           <div id="geomap" class="geomap">
-
+            <my-google-map></my-google-map>
           </div>
         </div>
         <div class="card-footer">
@@ -36,6 +36,7 @@
 </template>
 
 <script>
+import GoogleMap from './GoogleMap.vue'
 export default {
   name: 'VinhNguyen',
   methods: {
@@ -46,6 +47,7 @@ export default {
       this.mapAddress = ''
     }
   },
+  modules: { GoogleMap },
   data () {
     return {
       mapAddress: '',
