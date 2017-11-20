@@ -1,6 +1,5 @@
 <template>
 <div id="address-list" class="address-list">
-  {{ mapAddress }}
   <div class="row">
     <div class="col-sm-4 col-12">
       <div class="list-group">
