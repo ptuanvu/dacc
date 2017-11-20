@@ -5,6 +5,7 @@ import App from './App'
 import router from './router'
 import store from './store'
 import VueResource from 'vue-resource'
+import VueFire from 'vuefire'
 import './components/register.js'
 // import 'jquery'
 // import 'bootstrap/dist/css/bootstrap.min.css'
@@ -15,6 +16,7 @@ import './components/register.js'
 import './assets/style/app.scss'
 
 Vue.use(VueResource)
+Vue.use(VueFire)
 Vue.config.productionTip = false
 /* eslint-disable no-new */
 

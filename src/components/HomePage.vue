@@ -3,7 +3,7 @@
   <div class="row">
     <div class="col-sm-4 col-12">
       <div class="list-group">
-        <a href="#" class="list-group-item" v-for="ad in addresses" v-on:click="addMapAddress">{{ ad.address }}</a>
+        <a href="#" class="list-group-item" v-for="point in points" v-on:click="addMapAddress">{{ point.place }}</a>
       </div>
     </div>
     <div class="col-sm-8 col-12">
@@ -37,8 +37,27 @@
 
 <script>
 import GoogleMap from './GoogleMap.vue'
+import Firebase from 'firebase'
+
+let config = {
+  apiKey: 'AIzaSyBDOa513-q8BmPHmm1zlurdkkot3Z3bX-w',
+  authDomain: 'grab-midterm.firebaseapp.com',
+  databaseURL: 'https://grab-midterm.firebaseio.com',
+  projectId: 'grab-midterm',
+  storageBucket: 'grab-midterm.appspot.com',
+  messagingSenderId: '495408687232'
+}
+
+let app = Firebase.initializeApp(config)
+let db = app.database()
+
+let pointsRef = db.ref('points')
+
 export default {
   name: 'VinhNguyen',
+  firebase: {
+    points: pointsRef
+  },
   methods: {
     addMapAddress: function (event) {
       this.mapAddress = event.target.text
