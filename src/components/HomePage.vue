@@ -1,5 +1,6 @@
 <template>
 <div id="address-list" class="address-list">
+  {{ mapAddress }}
   <div class="row">
     <div class="col-sm-4 col-12">
       <div class="list-group">
@@ -19,12 +20,12 @@
               class="form-control"
               placeholder="Nhập địa chỉ vào đây"
               v-model="mapAddress"
-              :selectFirstOnEnter="true"
+              :selectFirstOnEnter="false"
               @place_changed="handlePlaceChanged"
             >
           </gmap-autocomplete>
             <span class="input-group-btn">
-              <button class="btn btn-primary" type="button">Tìm kiếm</button>
+              <button class="btn btn-primary" type="button" v-on:click="handleSearchPlace">Tìm kiếm</button>
             </span>
           </div>
           <div id="geomap" class="geomap">
@@ -46,6 +47,7 @@
 <script>
 import GoogleMap from './GoogleMap.vue'
 import { pointsRef } from '../firebase.js'
+import { searchPlace } from '../map-utils'
 
 export default {
   name: 'VinhNguyen',
@@ -55,27 +57,21 @@ export default {
   methods: {
     addMapAddress: function (event) {
       this.mapAddress = event.target.text
-      if (!global.service) {
-        global.service = new google.maps.places.PlacesService(global.map.$mapObject)
+      searchPlace(this, event.target.text)
+    },
+    handleSearchPlace: function () {
+      const element = $('#my-place-search-box')
+      if (!element || element.length === 0) {
+        console.error('Search box not found')
+        return
       }
-      const request = { query: event.target.text }
-      global.service.textSearch(
-        request,
-        (response) => {
-          console.log('GMAP_SEARCH___', response)
-          if (!response || response.length === 0) {
-            console.error('Search failed')
-            return
-          }
-          const place = response[0].geometry
-          if (!place) {
-            console.error('Place not found')
-            return
-          }
-          this.$store.commit('SET_MARKER_POSITION', place.location)
-        },
-        (err) => console.error(err)
-      )
+      const query = element[0].value
+      console.log('query__', query)
+      if (!query || query === '') {
+        console.error('Query null')
+        return
+      }
+      searchPlace(this, query)
     },
     resetMapAddress: function (event) {
       this.mapAddress = ''
