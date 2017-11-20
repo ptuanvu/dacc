@@ -1,13 +1,14 @@
 <template>
   <div id="my-gmap">
     <gmap-map
-      :center="center"
-      :zoom="7"
+      :center="this.$store.getters.center"
+      :zoom="17"
       class="my-google-map"
+      ref="myGMap"
     >
       <gmap-marker
         :key="index"
-        v-for="(m, index) in markers"
+        v-for="(m, index) in this.$store.getters.markers"
         :position="m.position"
         :clickable="true"
         :draggable="true"
@@ -18,29 +19,18 @@
 </template>
 
 <script>
-  import * as VueGoogleMaps from 'vue2-google-maps'
-  import Vue from 'vue'
-
-  Vue.use(VueGoogleMaps, {
-    load: {
-      key: 'AIzaSyBO0eTaMrFybrl6x4z7XCLbhaLRA2CsHtg'
+export default {
+  name: 'myGoogleMap',
+  data () {
+    return {
+      center: {},
+      markers: []
     }
-  })
-
-  const ggmap = {
-    name: 'myGoogleMap',
-    data () {
-      return {
-        center: {lat: 10.0, lng: 10.0},
-        markers: [{
-          position: {lat: 10.0, lng: 10.0}
-        }, {
-          position: {lat: 11.0, lng: 11.0}
-        }]
-      }
-    }
+  },
+  mounted: function () {
+    global.map = this.$refs.myGMap
   }
-  export default ggmap
+}
 </script>
 
 <style>

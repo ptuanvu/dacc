@@ -14,7 +14,15 @@
             <span class="input-group-btn">
               <button class="btn btn-secondary" type="button" v-on:click="resetMapAddress">Bỏ qua</button>
             </span>
-            <input type="text" class="form-control" placeholder="Nhập địa chỉ vào đây" v-model="mapAddress">
+            <gmap-autocomplete
+              id="my-place-search-box"
+              class="form-control"
+              placeholder="Nhập địa chỉ vào đây"
+              v-model="mapAddress"
+              :selectFirstOnEnter="true"
+              @place_changed="handlePlaceChanged"
+            >
+          </gmap-autocomplete>
             <span class="input-group-btn">
               <button class="btn btn-primary" type="button">Tìm kiếm</button>
             </span>
@@ -37,21 +45,7 @@
 
 <script>
 import GoogleMap from './GoogleMap.vue'
-import Firebase from 'firebase'
-
-let config = {
-  apiKey: 'AIzaSyBDOa513-q8BmPHmm1zlurdkkot3Z3bX-w',
-  authDomain: 'grab-midterm.firebaseapp.com',
-  databaseURL: 'https://grab-midterm.firebaseio.com',
-  projectId: 'grab-midterm',
-  storageBucket: 'grab-midterm.appspot.com',
-  messagingSenderId: '495408687232'
-}
-
-let app = Firebase.initializeApp(config)
-let db = app.database()
-
-let pointsRef = db.ref('points')
+import { pointsRef } from '../firebase.js'
 
 export default {
   name: 'VinhNguyen',
@@ -61,57 +55,48 @@ export default {
   methods: {
     addMapAddress: function (event) {
       this.mapAddress = event.target.text
+      if (!global.service) {
+        global.service = new google.maps.places.PlacesService(global.map.$mapObject)
+      }
+      const request = { query: event.target.text }
+      global.service.textSearch(
+        request,
+        (response) => {
+          console.log('GMAP_SEARCH___', response)
+          if (!response || response.length === 0) {
+            console.error('Search failed')
+            return
+          }
+          const place = response[0].geometry
+          if (!place) {
+            console.error('Place not found')
+            return
+          }
+          this.$store.commit('SET_MARKER_POSITION', place.location)
+        },
+        (err) => console.error(err)
+      )
     },
     resetMapAddress: function (event) {
       this.mapAddress = ''
+    },
+    handlePlaceChanged: function (place) {
+      if (!place || !place.geometry) {
+        console.log('Place was not found')
+        return
+      }
+
+      const position = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      }
+      this.$store.commit('SET_MARKER_POSITION', position)
     }
   },
   modules: { GoogleMap },
   data () {
     return {
-      mapAddress: '',
-      addresses: [
-        { id: '0McLBjWp45', address: '9-19 Hồ Tùng Mậu, Phường Nguyễn Thái Bình, Quận 1, TP Hồ Chí Minh' },
-        { id: 'SeZysPBqhP', address: '125/24 đường D1, Phường 25, Quận Bình Thạnh, TP Hồ Chí Minh' },
-        { id: 'mUwFUrUsU0', address: '409/23 Nguyễn Trọng Tuyển, Phường 2, Quận Tân Bình, TP Hồ Chí Minh' },
-        { id: 'a2qp1D0sFU', address: '276 Pasteur, Phường 08, Quận 3, TP Hồ Chí Minh' },
-        { id: 'ovIVSNnbye', address: 'A2/17Z5 ấp 1, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'koKRujkAyF', address: '541/19/4 Tỉnh Lộ 10, Phường Bình Trị Đông B, Quận Bình Tân, TP Hồ Chí Minh' },
-        { id: 'WH4ogt3NeQ', address: 'C12/31/8 Tổ 12, ấp 3, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'KpgUH2lqxH', address: '05 Đường 671, Khu Phố 6, Phường Tân Phú, Quận 9, TP Hồ Chí Minh' },
-        { id: 'aS6LjPjkEK', address: 'Số 189/7 đường Dương Đình Hội, Phường Phước Long B, Quận 9, TP Hồ Chí Minh' },
-        { id: 'T7dnkkVEJn', address: '184/30/19 Đường Bùi Văn Ngữ, Khu Phố 7, phường Hiệp Thành, Quận 12, TP Hồ Chí Minh' },
-        { id: '0McLBjWp45', address: '9-19 Hồ Tùng Mậu, Phường Nguyễn Thái Bình, Quận 1, TP Hồ Chí Minh' },
-        { id: 'SeZysPBqhP', address: '125/24 đường D1, Phường 25, Quận Bình Thạnh, TP Hồ Chí Minh' },
-        { id: 'mUwFUrUsU0', address: '409/23 Nguyễn Trọng Tuyển, Phường 2, Quận Tân Bình, TP Hồ Chí Minh' },
-        { id: 'a2qp1D0sFU', address: '276 Pasteur, Phường 08, Quận 3, TP Hồ Chí Minh' },
-        { id: 'ovIVSNnbye', address: 'A2/17Z5 ấp 1, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'koKRujkAyF', address: '541/19/4 Tỉnh Lộ 10, Phường Bình Trị Đông B, Quận Bình Tân, TP Hồ Chí Minh' },
-        { id: 'WH4ogt3NeQ', address: 'C12/31/8 Tổ 12, ấp 3, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'KpgUH2lqxH', address: '05 Đường 671, Khu Phố 6, Phường Tân Phú, Quận 9, TP Hồ Chí Minh' },
-        { id: 'aS6LjPjkEK', address: 'Số 189/7 đường Dương Đình Hội, Phường Phước Long B, Quận 9, TP Hồ Chí Minh' },
-        { id: 'T7dnkkVEJn', address: '184/30/19 Đường Bùi Văn Ngữ, Khu Phố 7, phường Hiệp Thành, Quận 12, TP Hồ Chí Minh' },
-        { id: '0McLBjWp45', address: '9-19 Hồ Tùng Mậu, Phường Nguyễn Thái Bình, Quận 1, TP Hồ Chí Minh' },
-        { id: 'SeZysPBqhP', address: '125/24 đường D1, Phường 25, Quận Bình Thạnh, TP Hồ Chí Minh' },
-        { id: 'mUwFUrUsU0', address: '409/23 Nguyễn Trọng Tuyển, Phường 2, Quận Tân Bình, TP Hồ Chí Minh' },
-        { id: 'a2qp1D0sFU', address: '276 Pasteur, Phường 08, Quận 3, TP Hồ Chí Minh' },
-        { id: 'ovIVSNnbye', address: 'A2/17Z5 ấp 1, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'koKRujkAyF', address: '541/19/4 Tỉnh Lộ 10, Phường Bình Trị Đông B, Quận Bình Tân, TP Hồ Chí Minh' },
-        { id: 'WH4ogt3NeQ', address: 'C12/31/8 Tổ 12, ấp 3, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'KpgUH2lqxH', address: '05 Đường 671, Khu Phố 6, Phường Tân Phú, Quận 9, TP Hồ Chí Minh' },
-        { id: 'aS6LjPjkEK', address: 'Số 189/7 đường Dương Đình Hội, Phường Phước Long B, Quận 9, TP Hồ Chí Minh' },
-        { id: 'T7dnkkVEJn', address: '184/30/19 Đường Bùi Văn Ngữ, Khu Phố 7, phường Hiệp Thành, Quận 12, TP Hồ Chí Minh' },
-        { id: '0McLBjWp45', address: '9-19 Hồ Tùng Mậu, Phường Nguyễn Thái Bình, Quận 1, TP Hồ Chí Minh' },
-        { id: 'SeZysPBqhP', address: '125/24 đường D1, Phường 25, Quận Bình Thạnh, TP Hồ Chí Minh' },
-        { id: 'mUwFUrUsU0', address: '409/23 Nguyễn Trọng Tuyển, Phường 2, Quận Tân Bình, TP Hồ Chí Minh' },
-        { id: 'a2qp1D0sFU', address: '276 Pasteur, Phường 08, Quận 3, TP Hồ Chí Minh' },
-        { id: 'ovIVSNnbye', address: 'A2/17Z5 ấp 1, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'koKRujkAyF', address: '541/19/4 Tỉnh Lộ 10, Phường Bình Trị Đông B, Quận Bình Tân, TP Hồ Chí Minh' },
-        { id: 'WH4ogt3NeQ', address: 'C12/31/8 Tổ 12, ấp 3, Xã Vĩnh Lộc B, Huyện Bình Chánh, TP Hồ Chí Minh' },
-        { id: 'KpgUH2lqxH', address: '05 Đường 671, Khu Phố 6, Phường Tân Phú, Quận 9, TP Hồ Chí Minh' },
-        { id: 'aS6LjPjkEK', address: 'Số 189/7 đường Dương Đình Hội, Phường Phước Long B, Quận 9, TP Hồ Chí Minh' },
-        { id: 'T7dnkkVEJn', address: '184/30/19 Đường Bùi Văn Ngữ, Khu Phố 7, phường Hiệp Thành, Quận 12, TP Hồ Chí Minh' }
-      ]
+      mapAddress: ''
     }
   }
 }

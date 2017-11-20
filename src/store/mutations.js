@@ -10,6 +10,11 @@ export const APPNAV_SEARCH = (state, searchData) => {
   state.appnav = searchData
 }
 
+export const SET_MARKER_POSITION = (state, newMarker) => {
+  state.markers = [{ position: newMarker }]
+  state.center = newMarker
+}
+
 /**
  * Clear each property, one by one, so reactivity still works.
  *

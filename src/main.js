@@ -4,6 +4,7 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import store from './store'
+import { global } from './global'
 import VueResource from 'vue-resource'
 import VueFire from 'vuefire'
 import './components/register.js'
@@ -26,6 +27,7 @@ new Vue({
   // so it's available globally.
   created: function () {
     window.Vue = this
+    window.global = global
   },
   router,
   store,
