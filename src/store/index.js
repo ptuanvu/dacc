@@ -11,7 +11,7 @@ Vue.use(Vuex)
 Vue.use(VueGoogleMaps, {
   load: {
     key: 'AIzaSyBO0eTaMrFybrl6x4z7XCLbhaLRA2CsHtg',
-    libraries: 'places'
+    libraries: ['places', 'geometry']
   }
 })
 

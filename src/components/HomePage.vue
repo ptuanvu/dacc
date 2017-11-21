@@ -40,18 +40,43 @@
       </div>
     </div>
   </div>
+  <div class="row">
+    <div class="col-sm-12 col-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Họ tên</th>
+            <th scope="col">Xe</th>
+            <th scope="col">Loại xe</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Tọa độ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="driver in drivers">
+            <td>{{driver.name}}</td>
+            <td>{{driver.vehicle.name}}</td>
+            <td>{{driver.vehicle.service_type}}</td>
+            <td>{{driver.status}}</td>
+            <td>{{driver.location.lat}},{{driver.location.lng}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 </template>
 
 <script>
 import GoogleMap from './GoogleMap.vue'
-import { pointsRef } from '../firebase.js'
+import { pointsRef, driversRef } from '../firebase.js'
 import { searchPlace } from '../map-utils'
 
 export default {
   name: 'VinhNguyen',
   firebase: {
-    points: pointsRef
+    points: pointsRef,
+    drivers: []
   },
   methods: {
     addMapAddress: function (event) {
@@ -85,6 +110,7 @@ export default {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng()
       }
+
       this.$store.commit('SET_MARKER_POSITION', position)
     }
   },
@@ -110,5 +136,9 @@ export default {
 .address-list .card {
   height: 85vh;
   overflow-y: scroll;
+}
+
+.table {
+  margin-top: 20px !important;
 }
 </style>
