@@ -3,7 +3,7 @@
   <div class="row">
     <div class="col-sm-4 col-12">
       <div class="list-group">
-        <a href="#" class="list-group-item" v-for="point in points" v-on:click="addMapAddress">{{ point.place }}</a>
+        <a href="#" class="list-group-item" v-for="point in points" v-on:click="addMapAddress($event,point)" v-if="point.status == false">{{ point.place }}</a>
       </div>
     </div>
     <div class="col-sm-8 col-12">
@@ -34,7 +34,7 @@
         <div class="card-footer">
           <div class="float-right">
             <button class="btn btn-warning" v-on:click="resetMapAddress">Huỷ bỏ</button>
-            <button class="btn btn-primary">Xác nhận</button>
+            <button class="btn btn-primary" v-on:click="submitGeocode">Xác nhận</button>
           </div>
         </div>
       </div>
@@ -49,16 +49,18 @@
             <th scope="col">Xe</th>
             <th scope="col">Loại xe</th>
             <th scope="col">Trạng thái</th>
-            <th scope="col">Tọa độ</th>
+            <th scope="col">Khoảng cách</th>
+            <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="driver in drivers">
-            <td>{{driver.name}}</td>
-            <td>{{driver.vehicle.name}}</td>
-            <td>{{driver.vehicle.service_type}}</td>
-            <td>{{driver.status}}</td>
-            <td>{{driver.location.lat}},{{driver.location.lng}}</td>
+          <tr v-for="driver in drivers" v-if="driver.data.status === 'free'">
+            <td>{{driver.data.name}}</td>
+            <td>{{driver.data.vehicle.name}}</td>
+            <td>{{driver.data.vehicle.service_type}}</td>
+            <td>{{driver.data.status}}</td>
+            <td>{{driver.distance}}</td>
+            <td><button class="btn btn-success" v-on:click="submitPointToDriver(driver.key)">Gửi thông tin</button></td>
           </tr>
         </tbody>
       </table>
@@ -70,18 +72,79 @@
 <script>
 import GoogleMap from './GoogleMap.vue'
 import { pointsRef, driversRef } from '../firebase.js'
-import { searchPlace } from '../map-utils'
+import { searchPlace, isNearCustomerWithinRadius } from '../map-utils'
 
 export default {
   name: 'VinhNguyen',
   firebase: {
     points: pointsRef,
-    drivers: []
   },
   methods: {
-    addMapAddress: function (event) {
+    addMapAddress: function (event,point) {
+      this.drivers = []
       this.mapAddress = event.target.text
+      this.selectedPoint = point
       searchPlace(this, event.target.text)
+    },
+    submitGeocode: function(event) {
+      event.preventDefault()
+      var center = this.$store.getters.markers[0].position
+      pointsRef.child(this.selectedPoint['.key']).update({"location": {lat: center.lat(), lng: center.lng()}})
+      var resultList = []
+      driversRef.on('value', function(snapshot) {
+        snapshot.forEach(function(snap) {
+          var driverData = snap.val()
+          var centerPoint = new google.maps.LatLng(center.lat(),center.lng())
+          var driverPoint = new google.maps.LatLng(driverData.location.lat,driverData.location.lng)
+          if(isNearCustomerWithinRadius(centerPoint ,driverPoint, 0, 300) !== -1) {
+            var driverFullData = {
+              key: snap.key,
+              data: driverData,
+              distance: isNearCustomerWithinRadius(centerPoint, driverPoint, 0, 300)
+            } 
+            resultList.push(driverFullData)
+          }
+        })
+      })
+      if(resultList.length < 10) {
+        driversRef.on('value', function(snapshot) {
+          snapshot.forEach(function(snap) {
+            var driverData = snap.val()
+            var centerPoint = new google.maps.LatLng(center.lat(),center.lng())
+            var driverPoint = new google.maps.LatLng(driverData.location.lat,driverData.location.lng)
+            if(isNearCustomerWithinRadius(centerPoint ,driverPoint,300, 600) !== -1) {
+                var driverFullData = {
+                key: snap.key,
+                data: driverData,
+                distance: isNearCustomerWithinRadius(centerPoint, driverPoint, 300, 600)
+              } 
+              resultList.push(driverFullData)
+            }
+          })
+        })
+      }
+      if(resultList.length < 10) {
+        driversRef.on('value', function(snapshot) {
+          snapshot.forEach(function(snap) {
+            var driverData = snap.val()
+            var centerPoint = new google.maps.LatLng(center.lat(),center.lng())
+            var driverPoint = new google.maps.LatLng(driverData.location.lat,driverData.location.lng)
+            if(isNearCustomerWithinRadius(centerPoint ,driverPoint,600, 1000) != -1) {
+                var driverFullData = {
+                key: snap.key,
+                data: driverData,
+                distance: isNearCustomerWithinRadius(centerPoint, driverPoint, 600, 1000)
+              } 
+              resultList.push(driverFullData)
+            }
+          })
+        })
+      }
+      resultList.sort(function(a,b){
+        return (a['distance'] > b['distance']) ? 1 : ((a['distance'] < b['distance']) ? -1 : 0);
+      })
+      resultList.splice(9, resultList.length - 10)
+      this.drivers = resultList
     },
     handleSearchPlace: function () {
       const element = $('#my-place-search-box')
@@ -112,12 +175,21 @@ export default {
       }
 
       this.$store.commit('SET_MARKER_POSITION', position)
+    },
+    submitPointToDriver: function(key) {
+      pointsRef.child(this.selectedPoint['.key']).update({"status": true })
+      driversRef.child(key).update({"status": "busy" , "pointId": this.selectedPoint['.key']})
+      this.selectedPoint = []
+      this.drivers = []
+      this.mappAddress = ''
     }
   },
   modules: { GoogleMap },
   data () {
     return {
-      mapAddress: ''
+      mapAddress: '',
+      drivers: [],
+      selectedPoint: []
     }
   }
 }

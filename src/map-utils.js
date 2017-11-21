@@ -22,4 +22,30 @@ const searchPlace = function (context, query) {
   )
 }
 
-export { searchPlace }
+const isNearCustomerWithinRadius = (customerPoint, driverPoint, fromRadius, toRadius) => {
+  var distance = google.maps.geometry.spherical.computeDistanceBetween(customerPoint,driverPoint)
+  if(distance >= fromRadius && distance < toRadius) return distance
+  else return -1
+}
+
+var directionsDisplay;
+var directionsService = new google.maps.DirectionsService();
+
+const initializeDirectionsService = () => {
+  directionsDisplay = new google.maps.DirectionsRenderer();
+  directionsDisplay.setMap(global.map);
+}
+
+const calcRoute = (start,end) => {
+  var request = {
+    origin: start,
+    destination: end,
+    travelMode: 'DRIVING'
+  };
+  directionsService.route(request, function(result, status){
+    if(status == 'OK') {
+      directionsDisplay.setDirections(result);
+    }
+  })
+}
+export { searchPlace, isNearCustomerWithinRadius, initializeDirectionsService, calcRoute }
